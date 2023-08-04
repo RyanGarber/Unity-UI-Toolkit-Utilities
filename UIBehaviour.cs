@@ -56,9 +56,13 @@ namespace Galamania
             foreach (string subselector in Regex.Split(selector, $"([{SelectorType}][{SelectorName}]+)"))
             {
                 if (subselector.Length == 0) continue;
-                else if (subselector.StartsWith('#') && element.name != subselector[1..]) return false;
-                else if (subselector.StartsWith('.') && !element.ClassListContains(subselector[1..])) return false;
-                else if (element.GetType().Name != subselector) return false;
+                
+                switch (subselector[0])
+                {
+                    case '#': if (element.name != subselector[1..]) return false; break;
+                    case '.': if (!element.ClassListContains(subselector[1..])) return false; break;
+                    default: if (element.GetType().Name != subselector) return false; break;
+                }
             }
 
             return true;
