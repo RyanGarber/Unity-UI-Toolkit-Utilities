@@ -1,16 +1,25 @@
 # Unity UI Toolkit Utility
 Utilities for UI Toolkit.
 
+---
+
 ### Find()
-Instead of using Unity's convoluted, inconsistent, obtuse UQuery, use selectors you're familiar with.
-Note: As this is much slower than UQuery, it should only be used inside OnEnable().
+Instead of using Unity's convoluted and inconsistent UQuery, use selectors you're familiar with!
 
 #### Selectors
-- Types: `Find("Button")`
+- Type: `Find("Button")`
+- Class: `Find(".class")`
+- Name: `Find("#name")`
+- Wildcard: `Find("*")`
+
+#### Inheritance
 - Descendents: `Find("#header .title")`
 - Children: `Find("#list > .list-entry")`
-- Wildcards: `Find("*")`
 
 #### Combinations
-- Selectors: `Find("Button#toggle-dark-mode.selected")`
-- Queries: `Find("#settings.tab, #settings.tab-content")`
+- Selectors: `Find("Button.selected")`
+- Queries: `Find("#play, #pause")`
+
+---
+
+###### Note: These features are not designed for performance and will create garbage. Cache their results inside OnEnable() to prevent a performance impact.
