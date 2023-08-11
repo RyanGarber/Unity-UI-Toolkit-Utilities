@@ -1,4 +1,4 @@
-# Unity UI Toolkit Utility
+# Unity UI Toolkit Utilities
 Utilities for UI Toolkit.
 
 ---
