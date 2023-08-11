@@ -22,13 +22,12 @@ namespace Galamania
                 MatchCollection matches = Regex.Matches(subquery, $"([{SelectorType}{SelectorName}]+)");
 
                 string Selector(int i) => subquery[matches[i].Index..(matches[i].Index + matches[i].Length)];
-                char Relation(int i) => i > 0 ? Trim(subquery[(matches[i - 1].Index + matches[i - 1].Length)..matches[i].Index]) : ' ';
-                static char Trim(string selector) => selector.Contains('>') ? '>' : (selector.Contains(',') ? ',' : ' ');
+                bool Descendents(int i) => i == 0 || !subquery[(matches[i - 1].Index + matches[i - 1].Length)..matches[i].Index].Contains('>');
 
                 IEnumerable<VisualElement> subresults = new List<VisualElement>() { Root };
 
                 for (int i = 0; i < matches.Count; i++)
-                    subresults = FindChildren(subresults, Selector(i), Relation(i) != '>');
+                    subresults = FindChildren(subresults, Selector(i), Descendents(i));
 
                 results.AddRange(subresults);
             }
