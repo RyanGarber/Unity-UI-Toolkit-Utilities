@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -9,13 +10,20 @@ namespace Galamania
 {
     public abstract class UIBehaviour : MonoBehaviour
     {
+        private UIElements? _root = null;
+        public UIElements Root => _root ??= new(gameObject.GetComponent<UIDocument>().rootVisualElement);
+    }
+
+    public struct UIElements
+    {
         public const string SelectorType = @"\*\.#", SelectorName = @"A-Za-z0-9-_";
-        
-        public VisualElement Root => GetComponent<UIDocument>().rootVisualElement;
-        
-        public List<VisualElement> Find(string query)
+
+        private List<VisualElement> _elements;
+        public UIElements(params VisualElement[] elements) => _elements = elements.ToList();
+
+        public UIElements Query(string query)
         {
-            List<VisualElement> results = new();
+            UIElements result = new();
 
             foreach (string subquery in query.Split(','))
             {
@@ -24,38 +32,35 @@ namespace Galamania
                 string Selector(int i) => subquery[matches[i].Index..(matches[i].Index + matches[i].Length)];
                 bool Descendents(int i) => i == 0 || !subquery[(matches[i - 1].Index + matches[i - 1].Length)..matches[i].Index].Contains('>');
 
-                IEnumerable<VisualElement> subresults = new List<VisualElement>() { Root };
-
+                result._elements = _elements;
                 for (int i = 0; i < matches.Count; i++)
-                    subresults = FindChildren(subresults, Selector(i), Descendents(i));
-
-                results.AddRange(subresults);
+                    result._elements = FindAllMatchingSelector(result._elements, Selector(i), Descendents(i));
             }
 
-            return results;
+            return result;
         }
 
-        public static IEnumerable<VisualElement> FindChildren(IEnumerable<VisualElement> elements, string selector, bool deep)
+        public static List<VisualElement> FindAllMatchingSelector(IEnumerable<VisualElement> elements, string selector, bool descendents)
         {
             List<VisualElement> results = new();
 
             foreach (VisualElement element in elements)
             {
-                results.AddRange(element.Children().Where(child => IsMatch(child, selector)));
-                if (deep) results.AddRange(FindChildren(element.Children(), selector, deep));
+                results.AddRange(element.Children().Where(child => DoesOneMatchSelector(child, selector)));
+                if (descendents) results.AddRange(FindAllMatchingSelector(element.Children(), selector, descendents));
             }
 
             return results;
         }
 
-        public static bool IsMatch(VisualElement element, string selector)
+        public static bool DoesOneMatchSelector(VisualElement element, string selector)
         {
             if (selector == "*") return true;
-            
+
             foreach (string subselector in Regex.Split(selector, $"([{SelectorType}][{SelectorName}]+)"))
             {
                 if (subselector.Length == 0) continue;
-                
+
                 switch (subselector[0])
                 {
                     case '#': if (element.name != subselector[1..]) return false; break;
@@ -66,5 +71,17 @@ namespace Galamania
 
             return true;
         }
+
+        public IEnumerable<VisualElement> All() => _elements;
+
+        public IEnumerable<T> All<T>() where T : VisualElement => _elements.OfType<T>();
+
+        public VisualElement First() => _elements.First();
+
+        public T First<T>() where T : VisualElement => _elements.OfType<T>().First();
+
+        public void ForEach(Action<VisualElement> action) => _elements.ForEach(action);
+
+        public void ForEach<T>(Action<T> action) where T : VisualElement => _elements.OfType<T>().ToList().ForEach(action);
     }
 }
